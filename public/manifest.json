@@ -1,0 +1,109 @@
+{
+  "name": "Aperture Forecast",
+  "short_name": "Aperture",
+  "description": "Photographer-focused weather forecasting. Sunrise, golden hour, drone conditions, and multi-source forecasts.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0D1117",
+  "theme_color": "#0D1117",
+  "lang": "en-US",
+  "categories": [
+    "weather",
+    "photography",
+    "utilities"
+  ],
+  "icons": [
+    {
+      "src": "/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Forecast",
+      "short_name": "Forecast",
+      "description": "View today's forecast",
+      "url": "/?tab=forecast",
+      "icons": [
+        {
+          "src": "/icons/icon-96x96.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Drone & Wind",
+      "short_name": "Drone",
+      "description": "Check drone flight conditions",
+      "url": "/?tab=flight",
+      "icons": [
+        {
+          "src": "/icons/icon-96x96.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/forecast-mobile.png",
+      "sizes": "1000x1514",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Forecast view on mobile"
+    },
+    {
+      "src": "/screenshots/forecast-desktop.png",
+      "sizes": "3024x1724",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Forecast view on desktop"
+    }
+  ]
+}

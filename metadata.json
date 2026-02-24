@@ -1,0 +1,7 @@
+{
+  "name": "Aperture Forecast",
+  "description": "An advanced weather application for photographers and drone pilots, providing detailed forecasts, sunrise/sunset times, and altitude-specific wind data.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}

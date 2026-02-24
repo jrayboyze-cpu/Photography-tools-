@@ -1,0 +1,14 @@
+[
+    {
+        "relation": [
+            "delegate_permission/common.handle_all_urls"
+        ],
+        "target": {
+            "namespace": "android_app",
+            "package_name": "app.vercel.aperture_forecast.twa",
+            "sha256_cert_fingerprints": [
+                "4B:FC:69:40:E7:AB:6B:C1:DE:F8:1E:BF:57:56:5B:E7:D3:BF:F8:F4:43:43:D4:5C:A3:4F:CD:3A:CA:D5:8B:5C"
+            ]
+        }
+    }
+]

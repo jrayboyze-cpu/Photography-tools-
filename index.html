@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aperture Forecast</title>
+
+  <!-- =============================================
+         PWA CORE
+         ============================================= -->
+  <!-- Links the Web App Manifest -->
+  <link rel="manifest" href="/manifest.json" />
+
+  <!-- Theme color: controls the browser chrome color on Android (matches your dark bg) -->
+  <meta name="theme-color" content="#0D1117" />
+
+  <!-- Tells Android Chrome this is a web app -->
+  <meta name="mobile-web-app-capable" content="yes" />
+
+  <!-- iOS Safari PWA support -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Aperture" />
+
+  <!-- =============================================
+         ICONS
+         Apple requires its own link tags (it ignores the manifest icons).
+         Android uses the manifest, but these don't hurt to have.
+         ============================================= -->
+  <link rel="icon" type="image/png" sizes="96x96" href="/icons/icon-96x96.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-96x96.png" />
+  <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+  <link rel="apple-touch-icon" sizes="120x120" href="/icons/icon-128x128.png" />
+  <link rel="apple-touch-icon" sizes="144x144" href="/icons/icon-144x144.png" />
+  <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192x192.png" />
+  <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192x192.png" />
+
+  <!-- =============================================
+         SEO / SOCIAL
+         ============================================= -->
+  <meta name="description"
+    content="Photographer-focused weather app. Golden hour, blue hour, drone conditions, and multi-source forecasts." />
+  <meta name="keywords" content="weather, photography, golden hour, blue hour, drone, forecast, sunrise, sunset" />
+
+  <!-- Open Graph (for sharing links) -->
+  <meta property="og:title" content="Aperture Forecast" />
+  <meta property="og:description"
+    content="Weather built for photographers. Golden hour, drone conditions, and multi-source forecasts." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="/icons/icon-512x512.png" />
+
+  <!-- =============================================
+         FONTS & STYLES (unchanged from your original)
+         ============================================= -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            'brand-primary': '#0D1117',
+            'brand-secondary': '#161B22',
+            'brand-accent': '#2F81F7',
+            'brand-text-primary': '#C9D1D9',
+            'brand-text-secondary': '#8B949E',
+          },
+          keyframes: {
+            pulse: {
+              '0%, 100%': { opacity: 1 },
+              '50%': { opacity: .75 },
+            },
+            fadeInOut: {
+              '0%': { opacity: 0, transform: 'translateY(5px)' },
+              '100%': { opacity: 1, transform: 'translateY(0)' },
+            },
+            fadeIn: {
+              '0%': { opacity: 0 },
+              '100%': { opacity: 1 },
+            }
+          },
+          animation: {
+            pulse: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            fadeInOut: 'fadeInOut 0.4s ease-out forwards',
+            fadeIn: 'fadeIn 0.3s ease-out forwards',
+          }
+        },
+      },
+    }
+  </script>
+
+  <!-- Apply theme class BEFORE first paint to avoid flash of wrong theme -->
+  <script>
+      (function () {
+        try {
+          var saved = localStorage.getItem('apertureForecastSettings');
+          var theme = 'system';
+          if (saved) {
+            var parsed = JSON.parse(saved);
+            if (parsed && parsed.theme) theme = parsed.theme;
+          }
+          var isDark;
+          if (theme === 'dark') {
+            isDark = true;
+          } else if (theme === 'light') {
+            isDark = false;
+          } else {
+            isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          }
+          document.documentElement.classList.add(isDark ? 'dark' : 'light');
+        } catch (e) { }
+      })();
+  </script>
+
+  <style>
+    body {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    .recharts-cartesian-axis-tick {
+      font-family: 'Inter', sans-serif;
+    }
+
+    *:focus-visible {
+      outline: 2px solid #2F81F7;
+      outline-offset: 2px;
+    }
+
+    /* Drag-and-drop active state */
+    body.dragging-active {
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body.dragging-active * {
+      cursor: grabbing !important;
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "react/": "https://aistudiocdn.com/react@^19.2.0/",
+        "react": "https://aistudiocdn.com/react@^19.2.0",
+        "@google/genai": "https://aistudiocdn.com/@google/genai@^1.26.0",
+        "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+        "recharts": "https://aistudiocdn.com/recharts@^3.3.0"
+      }
+    }
+    </script>
+  <link rel="stylesheet" href="/index.css">
+</head>
+
+<body class="bg-gray-100 text-gray-900 font-sans">
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+
+</html>
