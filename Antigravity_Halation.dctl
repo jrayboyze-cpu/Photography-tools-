@@ -1,0 +1,96 @@
+// Antigravity Halation Plugin
+// A single-node DaVinci Resolve DCTL for customizable halation effects.
+
+DEFINE_UI_PARAMS(threshold, Threshold, DCTLUI_SLIDER_FLOAT, 0.8, 0.0, 1.0, 0.01)
+DEFINE_UI_PARAMS(radius, Blur Radius, DCTLUI_SLIDER_INT, 5, 0, 15, 1)
+DEFINE_UI_PARAMS(intensity, Intensity, DCTLUI_SLIDER_FLOAT, 0.5, 0.0, 2.0, 0.01)
+DEFINE_UI_PARAMS(red_tint, Red Bias, DCTLUI_SLIDER_FLOAT, 1.0, 0.0, 1.0, 0.01)
+DEFINE_UI_PARAMS(green_tint, Green Bias, DCTLUI_SLIDER_FLOAT, 0.2, 0.0, 1.0, 0.01)
+DEFINE_UI_PARAMS(blue_tint, Blue Bias, DCTLUI_SLIDER_FLOAT, 0.0, 0.0, 1.0, 0.01)
+DEFINE_UI_PARAMS(show_mask, Show Halation Only, DCTLUI_CHECK_BOX, 0)
+
+__DEVICE__ float get_luminance(float r, float g, float b) {
+    return (r * 0.2126f) + (g * 0.7152f) + (b * 0.0722f);
+}
+
+// Using __TEXTURE__ requests spatial access from DaVinci Resolve, allowing us to read neighbor pixels.
+__DEVICE__ float3 transform(int p_Width, int p_Height, int p_X, int p_Y, __TEXTURE__ p_TexR, __TEXTURE__ p_TexG, __TEXTURE__ p_TexB) {
+    
+    // Read current pixel
+    float r_orig = _tex2D(p_TexR, p_X, p_Y);
+    float g_orig = _tex2D(p_TexG, p_X, p_Y);
+    float b_orig = _tex2D(p_TexB, p_X, p_Y);
+
+    float3 original_color = make_float3(r_orig, g_orig, b_orig);
+
+    if (radius == 0) {
+        if (show_mask) return make_float3(0.0f, 0.0f, 0.0f);
+        return original_color;
+    }
+
+    float blurred_r = 0.0f;
+    float blurred_g = 0.0f;
+    float blurred_b = 0.0f;
+    float weight_sum = 0.0f;
+
+    // A simple O(N^2) convolution loop.
+    // DCTL evaluates this per-pixel, so radius is capped at 15 to prevent GPU timeout.
+    for (int dy = -radius; dy <= radius; dy++) {
+        for (int dx = -radius; dx <= radius; dx++) {
+            
+            int sample_x = p_X + dx;
+            int sample_y = p_Y + dy;
+            
+            // Clamp to edge
+            if (sample_x < 0) sample_x = 0;
+            if (sample_x >= p_Width) sample_x = p_Width - 1;
+            if (sample_y < 0) sample_y = 0;
+            if (sample_y >= p_Height) sample_y = p_Height - 1;
+            
+            float s_r = _tex2D(p_TexR, sample_x, sample_y);
+            float s_g = _tex2D(p_TexG, sample_x, sample_y);
+            float s_b = _tex2D(p_TexB, sample_x, sample_y);
+            
+            float luma = get_luminance(s_r, s_g, s_b);
+            
+            // Highlight isolation: isolate pixels above the threshold
+            float highlight_amount = _fmaxf(luma - threshold, 0.0f);
+            
+            // Exponential falloff weight (Gaussian approx)
+            float dist_sq = (float)(dx*dx + dy*dy);
+            float weight = _expf(-dist_sq / (2.0f * (float)(radius * radius / 4.0f + 0.1f)));
+            
+            blurred_r += s_r * highlight_amount * weight;
+            blurred_g += s_g * highlight_amount * weight;
+            blurred_b += s_b * highlight_amount * weight;
+            weight_sum += weight;
+        }
+    }
+    
+    // Normalize blur
+    if (weight_sum > 0.0f) {
+        blurred_r /= weight_sum;
+        blurred_g /= weight_sum;
+        blurred_b /= weight_sum;
+    }
+    
+    // Apply tint and intensity to the halation pass
+    float3 halation = make_float3(
+        blurred_r * red_tint * intensity,
+        blurred_g * green_tint * intensity,
+        blurred_b * blue_tint * intensity
+    );
+    
+    if (show_mask) {
+        return halation;
+    }
+    
+    // Screen Blend for composing the halation back over the original image
+    float3 result = make_float3(
+        1.0f - (1.0f - original_color.x) * (1.0f - _fminf(halation.x, 1.0f)),
+        1.0f - (1.0f - original_color.y) * (1.0f - _fminf(halation.y, 1.0f)),
+        1.0f - (1.0f - original_color.z) * (1.0f - _fminf(halation.z, 1.0f))
+    );
+    
+    return result;
+}
