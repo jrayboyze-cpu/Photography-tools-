@@ -7,6 +7,7 @@
  */
 
 const { app, action, core } = require("photoshop");
+const { entrypoints } = require("uxp");
 const { executeAsModal } = core;
 
 // ─── Presets ──────────────────────────────────────────────────────────────────
@@ -20,30 +21,12 @@ const PRESETS = {
   broad:    { mode: "gaussian", gaussianRadius: 60, label: "Broad Tone" },
 };
 
-// ─── DOM References ──────────────────────────────────────────────────────────
+// ─── DOM References (populated on panel show) ────────────────────────────────
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
 
-const els = {
-  gaussianRadius:    $("#gaussianRadius"),
-  gaussianRadiusVal: $("#gaussianRadiusVal"),
-  surfaceRadius:     $("#surfaceRadius"),
-  surfaceRadiusVal:  $("#surfaceRadiusVal"),
-  surfaceThreshold:  $("#surfaceThreshold"),
-  surfaceThresholdVal: $("#surfaceThresholdVal"),
-  gaussianSettings:  $("#gaussianSettings"),
-  surfaceSettings:   $("#surfaceSettings"),
-  groupLayers:       $("#groupLayers"),
-  addMasks:          $("#addMasks"),
-  flattenFirst:      $("#flattenFirst"),
-  selectHF:          $("#selectHF"),
-  btnSeparate:       $("#btnSeparate"),
-  btnFlatten:        $("#btnFlatten"),
-  status:            $("#status"),
-  bitDepth:          $("#bitDepth"),
-  docSize:           $("#docSize"),
-};
+let els = {};
 
 // ─── State ───────────────────────────────────────────────────────────────────
 
@@ -441,9 +424,29 @@ async function flattenSeparation() {
   }
 }
 
-// ─── Event Bindings ──────────────────────────────────────────────────────────
+// ─── Panel Setup via UXP Entrypoints ─────────────────────────────────────────
 
-function init() {
+function initDOM() {
+  els = {
+    gaussianRadius:    $("#gaussianRadius"),
+    gaussianRadiusVal: $("#gaussianRadiusVal"),
+    surfaceRadius:     $("#surfaceRadius"),
+    surfaceRadiusVal:  $("#surfaceRadiusVal"),
+    surfaceThreshold:  $("#surfaceThreshold"),
+    surfaceThresholdVal: $("#surfaceThresholdVal"),
+    gaussianSettings:  $("#gaussianSettings"),
+    surfaceSettings:   $("#surfaceSettings"),
+    groupLayers:       $("#groupLayers"),
+    addMasks:          $("#addMasks"),
+    flattenFirst:      $("#flattenFirst"),
+    selectHF:          $("#selectHF"),
+    btnSeparate:       $("#btnSeparate"),
+    btnFlatten:        $("#btnFlatten"),
+    status:            $("#status"),
+    bitDepth:          $("#bitDepth"),
+    docSize:           $("#docSize"),
+  };
+
   // Sync sliders with number inputs
   syncSlider(els.gaussianRadius, els.gaussianRadiusVal);
   syncSlider(els.surfaceRadius, els.surfaceRadiusVal);
@@ -466,19 +469,26 @@ function init() {
   // Update doc info on load and when doc changes
   updateDocInfo();
   try {
-    require("photoshop").action.addNotificationListener(
+    action.addNotificationListener(
       ["set", "select", "open", "close", "newDocument"],
       () => updateDocInfo()
     );
   } catch {
-    // Notification listener may not be available in all versions
     setInterval(updateDocInfo, 3000);
   }
 }
 
-// Initialize when DOM is ready
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", init);
-} else {
-  init();
-}
+let initialized = false;
+
+entrypoints.setup({
+  panels: {
+    freqSepPanel: {
+      show() {
+        if (!initialized) {
+          initialized = true;
+          initDOM();
+        }
+      }
+    }
+  }
+});
