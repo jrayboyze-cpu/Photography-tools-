@@ -3,6 +3,7 @@
   "name": "Frequency Separation - Architectural",
   "version": "1.0.0",
   "main": "index.html",
+  "manifestVersion": 4,
   "host": [
     {
       "app": "PS",
@@ -12,8 +13,6 @@
       }
     }
   ],
-  "manifestVersion": 5,
-  "requiredPermissions": {},
   "entrypoints": [
     {
       "type": "panel",
@@ -36,59 +35,7 @@
       "preferredFloatingSize": {
         "width": 300,
         "height": 560
-      },
-      "icons": [
-        {
-          "width": 23,
-          "height": 23,
-          "path": "icons/icon-dark.png",
-          "scale": [1],
-          "theme": ["darkest", "dark", "medium"],
-          "species": ["pluginList"]
-        },
-        {
-          "width": 23,
-          "height": 23,
-          "path": "icons/icon-dark@2x.png",
-          "scale": [2],
-          "theme": ["darkest", "dark", "medium"],
-          "species": ["pluginList"]
-        },
-        {
-          "width": 23,
-          "height": 23,
-          "path": "icons/icon-light.png",
-          "scale": [1],
-          "theme": ["lightest", "light"],
-          "species": ["pluginList"]
-        },
-        {
-          "width": 23,
-          "height": 23,
-          "path": "icons/icon-light@2x.png",
-          "scale": [2],
-          "theme": ["lightest", "light"],
-          "species": ["pluginList"]
-        }
-      ]
-    }
-  ],
-  "icons": [
-    {
-      "width": 48,
-      "height": 48,
-      "path": "icons/plugin-icon.png",
-      "scale": [1],
-      "theme": ["darkest", "dark", "medium", "lightest", "light"],
-      "species": ["pluginList"]
-    },
-    {
-      "width": 48,
-      "height": 48,
-      "path": "icons/plugin-icon@2x.png",
-      "scale": [2],
-      "theme": ["darkest", "dark", "medium", "lightest", "light"],
-      "species": ["pluginList"]
+      }
     }
   ]
 }
