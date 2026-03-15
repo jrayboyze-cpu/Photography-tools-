@@ -3,13 +3,16 @@
   "name": "Frequency Separation - Architectural",
   "version": "1.0.0",
   "main": "index.html",
+  "manifestVersion": 4,
   "host": [
     {
       "app": "PS",
-      "minVersion": "24.0.0"
+      "minVersion": "24.0.0",
+      "data": {
+        "apiVersion": 2
+      }
     }
   ],
-  "manifestVersion": 5,
   "entrypoints": [
     {
       "type": "panel",
@@ -32,27 +35,7 @@
       "preferredFloatingSize": {
         "width": 300,
         "height": 560
-      },
-      "icons": [
-        {
-          "width": 23,
-          "height": 23,
-          "path": "icons/icon-dark.png",
-          "scale": [1, 2],
-          "theme": ["darkest", "dark", "medium", "lightest", "light"],
-          "species": ["pluginList"]
-        }
-      ]
-    }
-  ],
-  "icons": [
-    {
-      "width": 48,
-      "height": 48,
-      "path": "icons/plugin-icon.png",
-      "scale": [1, 2],
-      "theme": ["darkest", "dark", "medium", "lightest", "light"],
-      "species": ["pluginList"]
+      }
     }
   ]
 }
