@@ -480,15 +480,22 @@ function initDOM() {
 
 let initialized = false;
 
-entrypoints.setup({
-  panels: {
-    freqSepPanel: {
-      show() {
-        if (!initialized) {
-          initialized = true;
-          initDOM();
-        }
+try {
+  entrypoints.setup({
+    panels: {
+      freqSepPanel: {
+        create() {
+          if (!initialized) {
+            initialized = true;
+            initDOM();
+          }
+        },
+        show() {},
+        hide() {},
+        destroy() {}
       }
     }
-  }
-});
+  });
+} catch (err) {
+  console.error("Frequency Separation: entrypoints.setup failed:", err);
+}
