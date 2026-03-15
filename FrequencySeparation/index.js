@@ -31,15 +31,22 @@ let els = {};
 // ─── State ───────────────────────────────────────────────────────────────────
 
 let currentMode = "gaussian";
+let previewActive = false;
+let previewDebounceTimer = null;
+const PREVIEW_LAYER_NAME = "_FS_Preview_";
 
 // ─── UI Helpers ──────────────────────────────────────────────────────────────
 
 function syncSlider(slider, input) {
-  slider.addEventListener("input", () => { input.value = slider.value; });
+  slider.addEventListener("input", () => {
+    input.value = slider.value;
+    if (previewActive) debouncedPreview();
+  });
   input.addEventListener("input", () => {
     const v = Math.max(slider.min, Math.min(slider.max, parseInt(input.value) || 0));
     slider.value = v;
     input.value = v;
+    if (previewActive) debouncedPreview();
   });
 }
 
@@ -49,6 +56,7 @@ function setMode(mode) {
   els.surfaceSettings.classList.toggle("hidden", mode !== "surface");
   $$(".radio-option").forEach((el) => el.classList.remove("selected"));
   $(`#opt-${mode}`).classList.add("selected");
+  if (previewActive) debouncedPreview();
 }
 
 function showStatus(msg, type = "working") {
@@ -82,6 +90,7 @@ function applyPreset(presetKey) {
   }
 
   showStatus(`Preset: ${p.label}`, "success");
+  if (previewActive) debouncedPreview();
 }
 
 async function updateDocInfo() {
@@ -93,18 +102,100 @@ async function updateDocInfo() {
       return;
     }
     els.bitDepth.textContent = `${doc.bitsPerChannel}-bit`;
-    els.docSize.textContent = `${doc.width}×${doc.height}px`;
+    els.docSize.textContent = `${doc.width} x ${doc.height} px`;
   } catch {
     els.bitDepth.textContent = "--";
     els.docSize.textContent = "--";
   }
 }
 
+// ─── Preview Logic ───────────────────────────────────────────────────────────
+
+function debouncedPreview() {
+  clearTimeout(previewDebounceTimer);
+  previewDebounceTimer = setTimeout(() => applyPreview(), 300);
+}
+
+async function removePreviewLayer() {
+  try {
+    await executeAsModal(async () => {
+      try {
+        await action.batchPlay(bpSelectLayer(PREVIEW_LAYER_NAME), {});
+        await action.batchPlay([{
+          _obj: "delete",
+          _target: [{ _ref: "layer", _enum: "ordinal", _value: "targetEnum" }],
+          _options: { dialogOptions: "dontDisplay" }
+        }], {});
+      } catch {
+        // Preview layer doesn't exist, that's fine
+      }
+    }, { commandName: "Remove Preview" });
+  } catch {
+    // Silently ignore if modal fails
+  }
+}
+
+async function applyPreview() {
+  const doc = app.activeDocument;
+  if (!doc || !previewActive) return;
+
+  const blurMode = currentMode;
+  const gaussRadius = parseInt(els.gaussianRadius.value) || 10;
+  const surfRadius = parseInt(els.surfaceRadius.value) || 15;
+  const surfThresh = parseInt(els.surfaceThreshold.value) || 15;
+
+  els.previewStatus.textContent = "updating...";
+
+  try {
+    await executeAsModal(async () => {
+      // Remove existing preview layer if present
+      try {
+        await action.batchPlay(bpSelectLayer(PREVIEW_LAYER_NAME), {});
+        await action.batchPlay([{
+          _obj: "delete",
+          _target: [{ _ref: "layer", _enum: "ordinal", _value: "targetEnum" }],
+          _options: { dialogOptions: "dontDisplay" }
+        }], {});
+      } catch {
+        // No existing preview layer
+      }
+
+      // Duplicate current layer as preview
+      await action.batchPlay(bpDuplicateLayer(PREVIEW_LAYER_NAME), {});
+
+      // Apply the blur
+      if (blurMode === "gaussian") {
+        await action.batchPlay(bpGaussianBlur(gaussRadius), {});
+      } else {
+        await action.batchPlay(bpSurfaceBlur(surfRadius, surfThresh), {});
+      }
+    }, { commandName: "Preview Blur" });
+
+    if (previewActive) {
+      const label = blurMode === "gaussian"
+        ? `Gaussian R:${gaussRadius}`
+        : `Surface R:${surfRadius} T:${surfThresh}`;
+      els.previewStatus.textContent = label;
+    }
+  } catch (err) {
+    els.previewStatus.textContent = "preview failed";
+    console.error("Preview error:", err);
+  }
+}
+
+async function togglePreview(enabled) {
+  previewActive = enabled;
+  if (enabled) {
+    els.previewStatus.textContent = "loading...";
+    await applyPreview();
+  } else {
+    els.previewStatus.textContent = "";
+    await removePreviewLayer();
+  }
+}
+
 // ─── Photoshop BatchPlay Commands ────────────────────────────────────────────
 
-/**
- * Duplicate the active layer
- */
 function bpDuplicateLayer(name) {
   return [{
     _obj: "duplicate",
@@ -114,9 +205,6 @@ function bpDuplicateLayer(name) {
   }];
 }
 
-/**
- * Rename the active layer
- */
 function bpRenameLayer(name) {
   return [{
     _obj: "set",
@@ -126,9 +214,6 @@ function bpRenameLayer(name) {
   }];
 }
 
-/**
- * Gaussian Blur on active layer
- */
 function bpGaussianBlur(radius) {
   return [{
     _obj: "gaussianBlur",
@@ -137,9 +222,6 @@ function bpGaussianBlur(radius) {
   }];
 }
 
-/**
- * Surface Blur on active layer
- */
 function bpSurfaceBlur(radius, threshold) {
   return [{
     _obj: "surfaceBlur",
@@ -149,10 +231,6 @@ function bpSurfaceBlur(radius, threshold) {
   }];
 }
 
-/**
- * Apply Image for 8-bit: Subtract, Scale 2, Offset 128
- * Source is the low frequency layer
- */
 function bpApplyImage8bit(docName, sourceLayerName) {
   return [{
     _obj: "applyImageEvent",
@@ -173,9 +251,6 @@ function bpApplyImage8bit(docName, sourceLayerName) {
   }];
 }
 
-/**
- * Apply Image for 16-bit: Add, Scale 2, Offset 0, Invert source
- */
 function bpApplyImage16bit(docName, sourceLayerName) {
   return [{
     _obj: "applyImageEvent",
@@ -197,9 +272,6 @@ function bpApplyImage16bit(docName, sourceLayerName) {
   }];
 }
 
-/**
- * Set layer blend mode
- */
 function bpSetBlendMode(blendMode) {
   return [{
     _obj: "set",
@@ -209,9 +281,6 @@ function bpSetBlendMode(blendMode) {
   }];
 }
 
-/**
- * Select a layer by name
- */
 function bpSelectLayer(name) {
   return [{
     _obj: "select",
@@ -221,9 +290,6 @@ function bpSelectLayer(name) {
   }];
 }
 
-/**
- * Stamp visible (merge visible to new layer)
- */
 function bpStampVisible() {
   return [{
     _obj: "mergeVisible",
@@ -232,10 +298,6 @@ function bpStampVisible() {
   }];
 }
 
-/**
- * Add a layer mask (reveal all = empty white mask)
- * To get an "empty" mask for painting, we use reveal all
- */
 function bpAddLayerMask() {
   return [{
     _obj: "make",
@@ -246,43 +308,22 @@ function bpAddLayerMask() {
   }];
 }
 
-/**
- * Group selected layers
- */
 function bpGroupLayers(name) {
-  return [
-    {
-      _obj: "groupEvent",
-      name: name,
-      _options: { dialogOptions: "dontDisplay" }
-    }
-  ];
+  return [{
+    _obj: "groupEvent",
+    name: name,
+    _options: { dialogOptions: "dontDisplay" }
+  }];
 }
 
-/**
- * Select multiple layers by name
- */
-function bpSelectMultipleLayers(names) {
-  const cmds = [];
-  names.forEach((name, i) => {
-    cmds.push({
-      _obj: "select",
-      _target: [{ _ref: "layer", _name: name }],
-      makeVisible: false,
-      selectionModifier: i === 0
-        ? { _enum: "selectionModifierType", _value: "removeFromSelection" }
-        : { _enum: "selectionModifierType", _value: "addToSelection" },
-      _options: { dialogOptions: "dontDisplay" }
-    });
-  });
-  // First one should set selection, rest add to it
-  cmds[0].selectionModifier = undefined;
-  return cmds;
+function bpDeleteLayer() {
+  return [{
+    _obj: "delete",
+    _target: [{ _ref: "layer", _enum: "ordinal", _value: "targetEnum" }],
+    _options: { dialogOptions: "dontDisplay" }
+  }];
 }
 
-/**
- * Flatten (merge) a layer group
- */
 function bpFlattenGroup() {
   return [{
     _obj: "mergeLayersNew",
@@ -297,6 +338,12 @@ async function performSeparation() {
   if (!doc) {
     showStatus("No document open", "error");
     return;
+  }
+
+  // Turn off preview before separating
+  if (previewActive) {
+    els.previewToggle.checked = false;
+    await togglePreview(false);
   }
 
   const is16bit = doc.bitsPerChannel === 16;
@@ -352,20 +399,24 @@ async function performSeparation() {
 
       // Step 7: Add masks if requested
       if (doMasks) {
-        // Add mask to HF (currently selected)
-        await action.batchPlay(bpAddLayerMask(), {});
+        try {
+          await action.batchPlay(bpAddLayerMask(), {});
+        } catch (maskErr) {
+          console.warn("Could not add mask to HF layer:", maskErr.message);
+        }
 
-        // Select LF and add mask
         await action.batchPlay(bpSelectLayer(lfName), {});
-        await action.batchPlay(bpAddLayerMask(), {});
+        try {
+          await action.batchPlay(bpAddLayerMask(), {});
+        } catch (maskErr) {
+          console.warn("Could not add mask to LF layer:", maskErr.message);
+        }
 
-        // Go back to HF
         await action.batchPlay(bpSelectLayer(hfName), {});
       }
 
       // Step 8: Group layers if requested
       if (doGroup) {
-        // Select both layers
         await action.batchPlay(bpSelectLayer(hfName), {});
         await action.batchPlay([{
           _obj: "select",
@@ -410,7 +461,6 @@ async function flattenSeparation() {
 
   try {
     await executeAsModal(async () => {
-      // Try to select the group first
       try {
         await action.batchPlay(bpSelectLayer("Frequency Separation"), {});
         await action.batchPlay(bpFlattenGroup(), {});
@@ -445,6 +495,8 @@ function initDOM() {
     status:            $("#status"),
     bitDepth:          $("#bitDepth"),
     docSize:           $("#docSize"),
+    previewToggle:     $("#previewToggle"),
+    previewStatus:     $("#previewStatus"),
   };
 
   // Sync sliders with number inputs
@@ -460,6 +512,11 @@ function initDOM() {
   // Preset buttons
   $$(".preset-btn").forEach((btn) => {
     btn.addEventListener("click", () => applyPreset(btn.dataset.preset));
+  });
+
+  // Preview toggle
+  els.previewToggle.addEventListener("change", () => {
+    togglePreview(els.previewToggle.checked);
   });
 
   // Action buttons
@@ -492,7 +549,13 @@ try {
           }
         },
         hide(event) {},
-        destroy(event) {}
+        destroy(event) {
+          // Clean up preview layer when panel is destroyed
+          if (previewActive) {
+            previewActive = false;
+            removePreviewLayer();
+          }
+        }
       }
     }
   });
