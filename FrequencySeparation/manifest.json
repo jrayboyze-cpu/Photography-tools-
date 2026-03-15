@@ -32,39 +32,7 @@
       "preferredFloatingSize": {
         "width": 300,
         "height": 560
-      },
-      "icons": [
-        {
-          "width": 23,
-          "height": 23,
-          "path": "icons/icon-light.png",
-          "scale": [1, 2],
-          "theme": ["lightest", "light"],
-          "species": ["pluginList"]
-        },
-        {
-          "width": 23,
-          "height": 23,
-          "path": "icons/icon-dark.png",
-          "scale": [1, 2],
-          "theme": ["darkest", "dark"],
-          "species": ["pluginList"]
-        }
-      ]
+      }
     }
-  ],
-  "icons": [
-    {
-      "width": 48,
-      "height": 48,
-      "path": "icons/plugin-icon.png",
-      "scale": [1, 2],
-      "theme": ["darkest", "dark", "medium", "lightest", "light"],
-      "species": ["pluginList"]
-    }
-  ],
-  "requiredPermissions": {
-    "clipboard": "readAndWrite",
-    "localFileSystem": "request"
-  }
+  ]
 }
