@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <div class="header">
+      <h2>Frequency Separation</h2>
+      <span class="subtitle">Architectural Retouching</span>
+    </div>
+
+    <!-- Bit Depth Indicator -->
+    <div class="info-bar" id="docInfo">
+      <span id="bitDepth">--</span>
+      <span id="docSize">--</span>
+    </div>
+
+    <!-- Mode Selection -->
+    <div class="section">
+      <label class="section-label">Separation Mode</label>
+      <div class="radio-group">
+        <label class="radio-option selected" id="opt-gaussian">
+          <input type="radio" name="blurMode" value="gaussian" checked>
+          <span class="radio-label">Gaussian</span>
+          <span class="radio-desc">Standard frequency separation</span>
+        </label>
+        <label class="radio-option" id="opt-surface">
+          <input type="radio" name="blurMode" value="surface">
+          <span class="radio-label">Surface</span>
+          <span class="radio-desc">Edge-aware, preserves lines</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Gaussian Blur Settings -->
+    <div class="section" id="gaussianSettings">
+      <label class="section-label">Gaussian Radius</label>
+      <div class="slider-row">
+        <input type="range" id="gaussianRadius" min="1" max="80" value="10" class="slider">
+        <input type="number" id="gaussianRadiusVal" min="1" max="80" value="10" class="num-input">
+        <span class="unit">px</span>
+      </div>
+    </div>
+
+    <!-- Surface Blur Settings -->
+    <div class="section hidden" id="surfaceSettings">
+      <label class="section-label">Surface Blur</label>
+      <div class="slider-row">
+        <label class="slider-label">Radius</label>
+        <input type="range" id="surfaceRadius" min="1" max="100" value="15" class="slider">
+        <input type="number" id="surfaceRadiusVal" min="1" max="100" value="15" class="num-input">
+        <span class="unit">px</span>
+      </div>
+      <div class="slider-row">
+        <label class="slider-label">Threshold</label>
+        <input type="range" id="surfaceThreshold" min="1" max="255" value="15" class="slider">
+        <input type="number" id="surfaceThresholdVal" min="1" max="255" value="15" class="num-input">
+        <span class="unit">lvl</span>
+      </div>
+    </div>
+
+    <!-- Options -->
+    <div class="section">
+      <label class="section-label">Options</label>
+      <label class="checkbox-row">
+        <input type="checkbox" id="groupLayers" checked>
+        <span>Group layers in folder</span>
+      </label>
+      <label class="checkbox-row">
+        <input type="checkbox" id="addMasks" checked>
+        <span>Add empty masks to HF &amp; LF</span>
+      </label>
+      <label class="checkbox-row">
+        <input type="checkbox" id="flattenFirst">
+        <span>Stamp visible before separation</span>
+      </label>
+      <label class="checkbox-row">
+        <input type="checkbox" id="selectHF" checked>
+        <span>Select High Frequency when done</span>
+      </label>
+    </div>
+
+    <!-- Presets -->
+    <div class="section">
+      <label class="section-label">Architectural Presets</label>
+      <div class="preset-grid">
+        <button class="preset-btn" data-preset="facade">
+          <span class="preset-icon">&#9632;</span>
+          <span class="preset-name">Facade</span>
+          <span class="preset-detail">R:6 | Gaussian</span>
+        </button>
+        <button class="preset-btn" data-preset="concrete">
+          <span class="preset-icon">&#9641;</span>
+          <span class="preset-name">Concrete</span>
+          <span class="preset-detail">R:12 | Surface</span>
+        </button>
+        <button class="preset-btn" data-preset="glass">
+          <span class="preset-icon">&#9674;</span>
+          <span class="preset-name">Glass</span>
+          <span class="preset-detail">R:20 | Gaussian</span>
+        </button>
+        <button class="preset-btn" data-preset="sky">
+          <span class="preset-icon">&#9788;</span>
+          <span class="preset-name">Sky/BG</span>
+          <span class="preset-detail">R:40 | Gaussian</span>
+        </button>
+        <button class="preset-btn" data-preset="detail">
+          <span class="preset-icon">&#10023;</span>
+          <span class="preset-name">Fine Detail</span>
+          <span class="preset-detail">R:3 | Gaussian</span>
+        </button>
+        <button class="preset-btn" data-preset="broad">
+          <span class="preset-icon">&#9711;</span>
+          <span class="preset-name">Broad Tone</span>
+          <span class="preset-detail">R:60 | Gaussian</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="actions">
+      <button id="btnSeparate" class="btn-primary">
+        <span class="btn-icon">&#9776;</span> Separate Frequencies
+      </button>
+      <button id="btnFlatten" class="btn-secondary">
+        Flatten Separation
+      </button>
+    </div>
+
+    <!-- Status -->
+    <div id="status" class="status hidden"></div>
+  </div>
+
+  <script src="index.js"></script>
+</body>
+</html>
