@@ -484,15 +484,15 @@ try {
   entrypoints.setup({
     panels: {
       freqSepPanel: {
-        create() {
+        create(event) {},
+        show(event) {
           if (!initialized) {
             initialized = true;
             initDOM();
           }
         },
-        show() {},
-        hide() {},
-        destroy() {}
+        hide(event) {},
+        destroy(event) {}
       }
     }
   });
