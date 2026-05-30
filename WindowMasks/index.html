@@ -1,0 +1,222 @@
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <div class="header">
+      <h2>Window Masks</h2>
+      <span class="subtitle">Architectural Masking</span>
+    </div>
+
+    <!-- Doc Info -->
+    <div class="info-bar" id="docInfo">
+      <span id="docName">--</span>
+      <span id="docSize">--</span>
+    </div>
+
+    <!-- Shape Type -->
+    <div class="section">
+      <label class="section-label">Mask Shape</label>
+      <div class="radio-group">
+        <label class="radio-option selected" id="opt-rectangle">
+          <input type="radio" name="shapeType" value="rectangle" checked>
+          <span class="radio-label">Rectangle</span>
+          <span class="radio-desc">4-corner window</span>
+        </label>
+        <label class="radio-option" id="opt-polygon">
+          <input type="radio" name="shapeType" value="polygon">
+          <span class="radio-label">Polygon</span>
+          <span class="radio-desc">Custom point count</span>
+        </label>
+        <label class="radio-option" id="opt-ellipse">
+          <input type="radio" name="shapeType" value="ellipse">
+          <span class="radio-label">Ellipse</span>
+          <span class="radio-desc">Oval window</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Position & Size -->
+    <div class="section">
+      <label class="section-label">Position &amp; Size</label>
+      <div class="slider-row">
+        <label class="slider-label">X Center</label>
+        <input type="range" id="posX" min="0" max="100" value="50" class="slider">
+        <input type="number" id="posXVal" min="0" max="100" value="50" class="num-input">
+        <span class="unit">%</span>
+      </div>
+      <div class="slider-row">
+        <label class="slider-label">Y Center</label>
+        <input type="range" id="posY" min="0" max="100" value="50" class="slider">
+        <input type="number" id="posYVal" min="0" max="100" value="50" class="num-input">
+        <span class="unit">%</span>
+      </div>
+      <div class="slider-row">
+        <label class="slider-label">Width</label>
+        <input type="range" id="maskWidth" min="1" max="100" value="40" class="slider">
+        <input type="number" id="maskWidthVal" min="1" max="100" value="40" class="num-input">
+        <span class="unit">%</span>
+      </div>
+      <div class="slider-row">
+        <label class="slider-label">Height</label>
+        <input type="range" id="maskHeight" min="1" max="100" value="30" class="slider">
+        <input type="number" id="maskHeightVal" min="1" max="100" value="30" class="num-input">
+        <span class="unit">%</span>
+      </div>
+    </div>
+
+    <!-- Corner Warp (Rectangle only) -->
+    <div class="section" id="cornerSection">
+      <label class="section-label">Corner Warp</label>
+      <div class="corner-grid">
+        <div class="corner-control">
+          <span class="corner-label">TL</span>
+          <div class="corner-inputs">
+            <input type="number" id="tlX" min="-50" max="50" value="0" class="num-input-sm" title="Top-Left X offset">
+            <input type="number" id="tlY" min="-50" max="50" value="0" class="num-input-sm" title="Top-Left Y offset">
+          </div>
+        </div>
+        <div class="corner-control">
+          <span class="corner-label">TR</span>
+          <div class="corner-inputs">
+            <input type="number" id="trX" min="-50" max="50" value="0" class="num-input-sm" title="Top-Right X offset">
+            <input type="number" id="trY" min="-50" max="50" value="0" class="num-input-sm" title="Top-Right Y offset">
+          </div>
+        </div>
+        <div class="corner-control">
+          <span class="corner-label">BL</span>
+          <div class="corner-inputs">
+            <input type="number" id="blX" min="-50" max="50" value="0" class="num-input-sm" title="Bottom-Left X offset">
+            <input type="number" id="blY" min="-50" max="50" value="0" class="num-input-sm" title="Bottom-Left Y offset">
+          </div>
+        </div>
+        <div class="corner-control">
+          <span class="corner-label">BR</span>
+          <div class="corner-inputs">
+            <input type="number" id="brX" min="-50" max="50" value="0" class="num-input-sm" title="Bottom-Right X offset">
+            <input type="number" id="brY" min="-50" max="50" value="0" class="num-input-sm" title="Bottom-Right Y offset">
+          </div>
+        </div>
+      </div>
+      <button id="btnResetCorners" class="btn-mini">Reset Corners</button>
+    </div>
+
+    <!-- Polygon Sides (Polygon only) -->
+    <div class="section hidden" id="polygonSection">
+      <label class="section-label">Polygon Sides</label>
+      <div class="slider-row">
+        <label class="slider-label">Sides</label>
+        <input type="range" id="polySides" min="3" max="12" value="4" class="slider">
+        <input type="number" id="polySidesVal" min="3" max="12" value="4" class="num-input">
+      </div>
+    </div>
+
+    <!-- Rotation & Feather -->
+    <div class="section">
+      <label class="section-label">Transform</label>
+      <div class="slider-row">
+        <label class="slider-label">Rotation</label>
+        <input type="range" id="rotation" min="-180" max="180" value="0" class="slider">
+        <input type="number" id="rotationVal" min="-180" max="180" value="0" class="num-input">
+        <span class="unit">&deg;</span>
+      </div>
+      <div class="slider-row">
+        <label class="slider-label">Feather</label>
+        <input type="range" id="feather" min="0" max="250" value="0" class="slider">
+        <input type="number" id="featherVal" min="0" max="250" value="0" class="num-input">
+        <span class="unit">px</span>
+      </div>
+      <div class="slider-row">
+        <label class="slider-label">Opacity</label>
+        <input type="range" id="maskOpacity" min="1" max="100" value="100" class="slider">
+        <input type="number" id="maskOpacityVal" min="1" max="100" value="100" class="num-input">
+        <span class="unit">%</span>
+      </div>
+    </div>
+
+    <!-- Mask Mode -->
+    <div class="section">
+      <label class="section-label">Options</label>
+      <div class="radio-group">
+        <label class="radio-option selected" id="opt-reveal">
+          <input type="radio" name="maskMode" value="reveal" checked>
+          <span class="radio-label">Reveal</span>
+          <span class="radio-desc">White inside shape</span>
+        </label>
+        <label class="radio-option" id="opt-hide">
+          <input type="radio" name="maskMode" value="hide">
+          <span class="radio-label">Hide</span>
+          <span class="radio-desc">Black inside shape</span>
+        </label>
+      </div>
+      <label class="checkbox-row">
+        <input type="checkbox" id="newLayer" checked>
+        <span>Create on new layer</span>
+      </label>
+      <label class="checkbox-row">
+        <input type="checkbox" id="softEdge">
+        <span>Gaussian blur edge (post-feather)</span>
+      </label>
+    </div>
+
+    <!-- Presets -->
+    <div class="section">
+      <label class="section-label">Architectural Presets</label>
+      <div class="preset-grid">
+        <button class="preset-btn" data-preset="window">
+          <span class="preset-icon">&#9635;</span>
+          <span class="preset-name">Window</span>
+          <span class="preset-detail">40x30 | F:8</span>
+        </button>
+        <button class="preset-btn" data-preset="door">
+          <span class="preset-icon">&#9644;</span>
+          <span class="preset-name">Door</span>
+          <span class="preset-detail">20x50 | F:5</span>
+        </button>
+        <button class="preset-btn" data-preset="skyline">
+          <span class="preset-icon">&#9650;</span>
+          <span class="preset-name">Skyline</span>
+          <span class="preset-detail">90x40 | F:30</span>
+        </button>
+        <button class="preset-btn" data-preset="column">
+          <span class="preset-icon">&#9608;</span>
+          <span class="preset-name">Column</span>
+          <span class="preset-detail">10x80 | F:6</span>
+        </button>
+        <button class="preset-btn" data-preset="vignette">
+          <span class="preset-icon">&#9711;</span>
+          <span class="preset-name">Vignette</span>
+          <span class="preset-detail">Ellipse | F:80</span>
+        </button>
+        <button class="preset-btn" data-preset="perspective">
+          <span class="preset-icon">&#9674;</span>
+          <span class="preset-name">Perspective</span>
+          <span class="preset-detail">Warped corners</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="actions">
+      <button id="btnApplyMask" class="btn-primary">
+        <span class="btn-icon">&#11034;</span> Apply Window Mask
+      </button>
+      <div class="btn-row">
+        <button id="btnInvertMask" class="btn-secondary btn-half">Invert Mask</button>
+        <button id="btnDeleteMask" class="btn-secondary btn-half">Delete Mask</button>
+      </div>
+      <button id="btnApplyToAdj" class="btn-secondary">
+        Apply Mask to Curves/Levels Adjustment
+      </button>
+    </div>
+
+    <!-- Status -->
+    <div id="status" class="status hidden"></div>
+  </div>
+
+  <script src="index.js"></script>
+</body>
+</html>
