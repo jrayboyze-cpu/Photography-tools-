@@ -1,0 +1,95 @@
+const { app, action, core } = require("photoshop");
+
+async function debugFreqSep() {
+  const doc = app.activeDocument;
+  if (!doc) {
+    console.log("No document open. Open an image first.");
+    return;
+  }
+
+  const is16bit = doc.bitsPerChannel === 16;
+  const docName = doc.name;
+  const radius = 10;
+
+  console.log(`Document: ${docName} — ${doc.width}x${doc.height} px, ${doc.bitsPerChannel}-bit`);
+  console.log(`Using ${is16bit ? "16-bit (Add+Invert)" : "8-bit (Subtract)"} method`);
+  console.log(`Gaussian radius: ${radius}px`);
+
+  await core.executeAsModal(async () => {
+    const lfName = "LF - Low Frequency";
+    const hfName = "HF - High Frequency";
+
+    console.log("Step 1: Duplicating layer for Low Frequency...");
+    await action.batchPlay([{
+      _obj: "duplicate",
+      _target: [{ _ref: "layer", _enum: "ordinal", _value: "targetEnum" }],
+      name: lfName,
+      _options: { dialogOptions: "dontDisplay" }
+    }], {});
+
+    console.log("Step 2: Applying Gaussian blur...");
+    await action.batchPlay([{
+      _obj: "gaussianBlur",
+      radius: { _unit: "pixelsUnit", _value: radius },
+      _options: { dialogOptions: "dontDisplay" }
+    }], {});
+
+    console.log("Step 3: Duplicating for High Frequency...");
+    await action.batchPlay([{
+      _obj: "duplicate",
+      _target: [{ _ref: "layer", _enum: "ordinal", _value: "targetEnum" }],
+      name: hfName,
+      _options: { dialogOptions: "dontDisplay" }
+    }], {});
+
+    console.log("Step 4: Apply Image...");
+    if (is16bit) {
+      await action.batchPlay([{
+        _obj: "applyImageEvent",
+        with: {
+          _obj: "calculation",
+          to: {
+            _ref: [
+              { _ref: "channel", _enum: "channel", _value: "RGB" },
+              { _ref: "layer", _name: lfName },
+              { _ref: "document", _name: docName }
+            ]
+          },
+          calculation: { _enum: "calculationType", _value: "add" },
+          scale: 2, offset: 0, invert: true
+        },
+        _options: { dialogOptions: "dontDisplay" }
+      }], {});
+    } else {
+      await action.batchPlay([{
+        _obj: "applyImageEvent",
+        with: {
+          _obj: "calculation",
+          to: {
+            _ref: [
+              { _ref: "channel", _enum: "channel", _value: "RGB" },
+              { _ref: "layer", _name: lfName },
+              { _ref: "document", _name: docName }
+            ]
+          },
+          calculation: { _enum: "calculationType", _value: "subtract" },
+          scale: 2, offset: 128
+        },
+        _options: { dialogOptions: "dontDisplay" }
+      }], {});
+    }
+
+    console.log("Step 5: Setting Linear Light blend mode...");
+    await action.batchPlay([{
+      _obj: "set",
+      _target: [{ _ref: "layer", _enum: "ordinal", _value: "targetEnum" }],
+      to: { _obj: "layer", mode: { _enum: "blendMode", _value: "linearLight" } },
+      _options: { dialogOptions: "dontDisplay" }
+    }], {});
+
+    console.log("--- Debug complete! Check Layers panel for HF and LF layers ---");
+
+  }, { commandName: "Debug Freq Sep" });
+}
+
+debugFreqSep().catch((err) => console.error("Debug script error:", err));

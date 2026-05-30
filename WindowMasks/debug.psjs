@@ -1,0 +1,133 @@
+const { app, action, core } = require("photoshop");
+
+async function debugWindowMask() {
+  const doc = app.activeDocument;
+  if (!doc) {
+    console.log("No document open. Open an image first.");
+    return;
+  }
+
+  const docW = doc.width;
+  const docH = doc.height;
+  console.log(`Document: ${doc.name} — ${docW}x${docH} px, ${doc.bitsPerChannel}-bit`);
+
+  const cx = docW / 2;
+  const cy = docH / 2;
+  const halfW = docW * 0.2;
+  const halfH = docH * 0.15;
+  const feather = 10;
+
+  const points = [
+    { x: cx - halfW, y: cy - halfH },
+    { x: cx + halfW, y: cy - halfH },
+    { x: cx + halfW, y: cy + halfH },
+    { x: cx - halfW, y: cy + halfH },
+  ];
+
+  const pathPoints = points.map((pt) => ({
+    _obj: "pathPoint",
+    anchor: {
+      _obj: "point",
+      horizontal: { _unit: "pixelsUnit", _value: pt.x },
+      vertical: { _unit: "pixelsUnit", _value: pt.y },
+    },
+    leftDirection: {
+      _obj: "point",
+      horizontal: { _unit: "pixelsUnit", _value: pt.x },
+      vertical: { _unit: "pixelsUnit", _value: pt.y },
+    },
+    rightDirection: {
+      _obj: "point",
+      horizontal: { _unit: "pixelsUnit", _value: pt.x },
+      vertical: { _unit: "pixelsUnit", _value: pt.y },
+    },
+    smooth: false,
+  }));
+
+  await core.executeAsModal(async () => {
+    console.log("Step 1: Creating new layer...");
+    await action.batchPlay([{
+      _obj: "make",
+      _target: [{ _ref: "layer" }],
+      using: { _obj: "layer", name: "Debug Window Mask" },
+      _options: { dialogOptions: "dontDisplay" }
+    }], {});
+
+    console.log("Step 2: Creating work path...");
+    await action.batchPlay([{
+      _obj: "set",
+      _target: [{ _ref: "path", _property: "workPath" }],
+      to: {
+        _obj: "path",
+        pathComponents: [{
+          _obj: "pathComponent",
+          shapeOperation: { _enum: "shapeOperation", _value: "xor" },
+          subpathListKey: [{
+            _obj: "subpath",
+            closedSubpath: true,
+            points: pathPoints,
+          }]
+        }]
+      },
+      _options: { dialogOptions: "dontDisplay" }
+    }], {});
+
+    console.log("Step 3: Converting path to selection with feather...");
+    await action.batchPlay([{
+      _obj: "set",
+      _target: [{ _ref: "channel", _property: "selection" }],
+      to: { _ref: "path", _property: "workPath" },
+      feather: { _unit: "pixelsUnit", _value: feather },
+      antiAlias: true,
+      _options: { dialogOptions: "dontDisplay" }
+    }], {});
+
+    console.log("Step 4: Cleaning up work path...");
+    try {
+      await action.batchPlay([{
+        _obj: "delete",
+        _target: [{ _ref: "path", _property: "workPath" }],
+        _options: { dialogOptions: "dontDisplay" }
+      }], {});
+    } catch (e) {
+      console.log("  (path cleanup skipped: " + e.message + ")");
+    }
+
+    console.log("Step 5: Filling selection with white...");
+    await action.batchPlay([{
+      _obj: "fill",
+      using: { _enum: "fillContents", _value: "color" },
+      color: { _obj: "RGBColor", red: 255, grain: 255, blue: 255 },
+      opacity: { _unit: "percentUnit", _value: 100 },
+      mode: { _enum: "blendMode", _value: "normal" },
+      _options: { dialogOptions: "dontDisplay" }
+    }], {});
+
+    console.log("Step 6: Deselecting...");
+    await action.batchPlay([{
+      _obj: "set",
+      _target: [{ _ref: "channel", _property: "selection" }],
+      to: { _enum: "ordinal", _value: "none" },
+      _options: { dialogOptions: "dontDisplay" }
+    }], {});
+
+    console.log("Step 7: Adding layer mask...");
+    try {
+      await action.batchPlay([{
+        _obj: "make",
+        new: { _class: "channel" },
+        at: { _ref: "channel", _enum: "channel", _value: "mask" },
+        using: { _enum: "userMaskEnabled", _value: "revealAll" },
+        _options: { dialogOptions: "dontDisplay" }
+      }], {});
+      console.log("  Mask added successfully.");
+    } catch (e) {
+      console.log("  Mask creation failed: " + e.message);
+    }
+
+    console.log("--- Debug complete! Check Layers panel for 'Debug Window Mask' layer ---");
+
+  }, { commandName: "Debug Window Mask" });
+}
+
+debugWindowMask().catch((err) => console.error("Debug script error:", err));
